@@ -26,11 +26,6 @@ jobs:
           node-version: 22
           cache: npm
 
-      # enablement turns Pages on if it has never been enabled for the repo.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - run: npm ci
       - run: npm run build
 
