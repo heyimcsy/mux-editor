@@ -1,0 +1,29 @@
+# Ocean Night
+# 저장 위치: ~/.config/ghostty/themes/ocean-night   (확장자 없음)
+#
+# cmux는 터미널 색을 Ghostty 테마 파일에서 읽습니다.
+# wmux도 같은 문법을 읽으며, `wmux config import-ghostty` 로 가져올 수 있습니다.
+
+background = #1d262a
+foreground = #e7ebed
+cursor-color = #eaeaea
+cursor-text = #1d262a
+selection-background = #435b67
+selection-foreground = #e7ebed
+
+palette = 0=#435b67
+palette = 1=#fc3841
+palette = 2=#6bc46d
+palette = 3=#e6c62f
+palette = 4=#61afef
+palette = 5=#c678dd
+palette = 6=#56b6c2
+palette = 7=#b7c0c4
+palette = 8=#5c7581
+palette = 9=#ff5a63
+palette = 10=#8ad98c
+palette = 11=#f2d94e
+palette = 12=#82c0ff
+palette = 13=#d99ae8
+palette = 14=#7fd3dd
+palette = 15=#e7ebed

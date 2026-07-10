@@ -1,0 +1,37 @@
+커스터마이징 가능한 테마 요소 리스트
+
+폰트 및 텍스트 스타일
+- 폰트 패밀리 (Font Family): 시스템에 설치된 고정폭(Monospaced) 폰트 선택.
+
+- 글자 크기 (Font Size): 포인트 단위 또는 픽셀 단위 조절.
+
+- 글자 굵기 (Font Weight): 얇게, 보통, 굵게 등 렌더링 방식.
+
+- 안티앨리어싱 (Antialiasing): 폰트 렌더링 부드러움 설정.
+
+색상 팔레트 (Color Scheme)
+- 전경색 (Foreground): 기본 텍스트 색상.
+
+- 배경색 (Background): 터미널 기본 배경색.
+
+- ANSI 컬러 (0~15번): 터미널에서 사용하는 표준 16색(Black, Red, Green, Yellow, Blue, Magenta, Cyan, White 등).
+
+- 강조색 (Highlight): 선택 영역이나 검색 결과 강조 색상.
+
+창 및 탭 레이아웃 (UI Component Styles)
+- 활성 탭 배경색 (Active Tab Background): 현재 작업 중인 창의 탭 색상.
+
+- 비활성 탭 배경색 (Inactive Tab Background): 배경에 있는 탭들의 색상.
+
+- 탭 테두리/구분선 색상 (Border/Separator Color): 창과 창 사이의 구분선.
+
+- 상태 표시줄 배경색 (Status Bar Background): 하단 정보창 영역.
+
+- 상태 표시줄 텍스트색 (Status Bar Text): 하단 정보창 글씨색.
+
+투명도 및 기타 효과
+- 창 투명도 (Opacity): 터미널 배경의 알파 채널 값.
+
+- 블러 효과 (Blur): 투명도와 결합된 배경 블러 처리.
+
+- 창 간격 (Window Padding): 창 주변의 여백(Margin) 값.

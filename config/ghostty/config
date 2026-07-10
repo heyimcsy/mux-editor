@@ -1,0 +1,23 @@
+# 저장 위치: ~/.config/ghostty/config
+# 적용:     cmux reload-config   (또는 cmux 안에서 ⌘⇧,)
+#
+# 이 파일은 Mux Editor 의 lib/export.ts 가 생성하는 것과 같은 형식입니다.
+# 터미널 색은 themes/ocean-night 에 있고, 여기에는 폰트·창·분할 설정만 있습니다.
+# cmux 앱 설정(사이드바·알림·단축키)은 ~/.config/cmux/cmux.json 입니다.
+# ── 폰트 ──
+font-family = Fira Code
+font-size = 14
+
+# ── 테마 ──
+theme = ocean-night
+
+# ── 창 ──
+background-opacity = 0.85
+background-blur = 20
+window-padding-x = 12
+window-padding-y = 10
+
+# ── 분할 ──
+split-divider-color = #435b67
+unfocused-split-opacity = 0.70
+unfocused-split-fill = #1d262a

@@ -1,0 +1,52 @@
+# 저장 위치: ~/.wmux/config.toml
+#
+# ⚠ 미검증 파일입니다.
+#
+# 아래 TOML 구조는 실제 wmux 설치본에서 확인하지 않았습니다. `wmux` 라는
+# 이름의 프로젝트가 최소 네 개 있고 설정 스키마가 서로 다릅니다.
+# PRD 가정 A1 이 아직 열려 있습니다.
+#
+# 검증된 경로는 이쪽입니다. 먼저 이걸 쓰세요:
+#
+#   1. config/ghostty/themes/ocean-night 와 config/ghostty/config 를 합쳐
+#      ~/.wmux/themes/ocean-night 로 저장 (편집기의 Windows 추출이 만들어 줍니다)
+#   2. wmux config import-ghostty ~/.wmux/themes/ocean-night
+#   3. Ctrl+, → Appearance → Theme 에서 ocean-night 고르기
+#
+# Windows Terminal 에서 쓰던 색을 가져오려면: wmux config import-wt
+[font]
+family = "Fira Code"
+size = 14
+
+[appearance]
+theme = "ocean-night"
+opacity = 0.85
+blur = true
+padding-x = 12
+padding-y = 10
+
+[themes.ocean-night]
+background = "#1d262a"
+foreground = "#e7ebed"
+cursor-color = "#eaeaea"
+cursor-text = "#1d262a"
+selection-background = "#435b67"
+selection-foreground = "#e7ebed"
+palette = [
+  "#435b67",
+  "#fc3841",
+  "#6bc46d",
+  "#e6c62f",
+  "#61afef",
+  "#c678dd",
+  "#56b6c2",
+  "#b7c0c4",
+  "#5c7581",
+  "#ff5a63",
+  "#8ad98c",
+  "#f2d94e",
+  "#82c0ff",
+  "#d99ae8",
+  "#7fd3dd",
+  "#e7ebed",
+]

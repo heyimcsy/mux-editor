@@ -1,0 +1,36 @@
+// 저장 위치: ~/.config/cmux/cmux.json   (프로젝트 단위로는 .cmux/cmux.json)
+// 형식: 주석과 후행 쉼표를 허용하는 JSON
+//
+// 이 파일은 cmux 앱 설정만 담습니다. 폰트와 색은 여기가 아니라
+// ~/.config/ghostty/config 에 있습니다.
+//
+// ⚠ 요청하신 5번 섹션의 키들은 아래 상태입니다. 근거 없는 키를 적어두면
+//   cmux가 조용히 무시하고, 설정이 먹은 줄 착각하게 됩니다. 그래서 뺐습니다.
+//
+//   ui-scale          → 문서에서 못 찾음. 앱 설정(⌘,)에만 있는 것으로 보입니다.
+//   sidebar-visible   → 사이드바 설정은 존재하지만 이 키 이름은 확인 못 함.
+//   workspace-colors  → 워크스페이스 탭 강조색은 현재 커스텀 불가.
+//                       manaflow-ai/cmux 이슈 #1753 이 이 기능을 요청 중입니다.
+//   notification-ring → 링 자체를 끄거나 색을 바꾸는 키는 문서에 없음.
+//                       아래 hooks 로 알림 동작을 가로챌 수는 있습니다.
+//   imessage-mode     → 존재 근거를 전혀 못 찾았습니다.
+//
+//   실제 키 이름은 cmux 안에서 ⌘, → cmux.json 을 열어 확인하는 게 가장 빠릅니다.
+
+{
+  // 확인된 유일한 구조입니다. 각 훅은 알림 정책을 JSON 으로 stdin 에 받고,
+  // 수정한 JSON 을 stdout 으로 돌려줍니다.
+  "notifications": {
+    "hooks": [
+      {
+        "id": "quiet-desktop-popups",
+        // 데스크톱 팝업만 끄고 사이드바 배지와 패널 표시는 남깁니다.
+        "command": "sed 's/\"desktop\":true/\"desktop\":false/'",
+        "timeoutSeconds": 20
+      }
+    ],
+
+    // "replace" 로 두면 상위에서 물려받은 훅을 무시합니다.
+    "hooksMode": "replace"
+  }
+}
