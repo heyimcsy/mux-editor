@@ -10,14 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { cloneConfig, DEFAULT_CONFIG, type AppearanceConfig } from "./config";
-import { cloneTheme, DEFAULT_THEME, type TargetOs, type Theme } from "./theme";
+import { cloneTheme, DEFAULT_THEME, type Theme } from "./theme";
 
 // v2 dropped Theme.backgroundOpacity in favour of AppearanceConfig. Older
 // payloads are simply ignored rather than migrated.
 const STORAGE_KEY = "mux-editor:v2";
 
 type Persisted = {
-  os: TargetOs | null;
   theme: Theme;
   config: AppearanceConfig;
 };
@@ -25,7 +24,6 @@ type Persisted = {
 type Store = Persisted & {
   /** False until localStorage has been read, so the UI can avoid flashing defaults. */
   hydrated: boolean;
-  setOs: (os: TargetOs) => void;
   setTheme: (theme: Theme) => void;
   patchTheme: (patch: Partial<Theme>) => void;
   setPaletteColor: (index: number, hex: string) => void;
@@ -65,14 +63,12 @@ function load(): Persisted | null {
     const parsed = JSON.parse(raw) as Partial<Persisted>;
     if (!isValidTheme(parsed.theme)) return null;
 
-    const os = parsed.os === "macos" || parsed.os === "windows" ? parsed.os : null;
-
     // A config written by an older build may be missing keys added since.
     const config = isValidConfig(parsed.config)
       ? { ...DEFAULT_CONFIG, ...parsed.config }
       : cloneConfig(DEFAULT_CONFIG);
 
-    return { os, theme: parsed.theme, config };
+    return { theme: parsed.theme, config };
   } catch {
     // Corrupt or unreadable storage should never take the editor down.
     return null;
@@ -80,7 +76,6 @@ function load(): Persisted | null {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [os, setOsState] = useState<TargetOs | null>(null);
   const [theme, setThemeState] = useState<Theme>(() => cloneTheme(DEFAULT_THEME));
   const [config, setConfigState] = useState<AppearanceConfig>(() =>
     cloneConfig(DEFAULT_CONFIG)
@@ -90,7 +85,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = load();
     if (saved) {
-      setOsState(saved.os);
       setThemeState(saved.theme);
       setConfigState(saved.config);
     }
@@ -100,13 +94,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ os, theme, config }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme, config }));
     } catch {
       // Private browsing and quota errors are not worth interrupting the user.
     }
-  }, [hydrated, os, theme, config]);
+  }, [hydrated, theme, config]);
 
-  const setOs = useCallback((next: TargetOs) => setOsState(next), []);
   const setTheme = useCallback((next: Theme) => setThemeState(cloneTheme(next)), []);
 
   const patchTheme = useCallback((patch: Partial<Theme>) => {
@@ -131,11 +124,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Store>(
     () => ({
-      os,
       theme,
       config,
       hydrated,
-      setOs,
       setTheme,
       patchTheme,
       setPaletteColor,
@@ -143,11 +134,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetConfig,
     }),
     [
-      os,
       theme,
       config,
       hydrated,
-      setOs,
       setTheme,
       patchTheme,
       setPaletteColor,
@@ -163,10 +152,4 @@ export function useStore(): Store {
   const store = useContext(StoreContext);
   if (!store) throw new Error("useStore must be used inside <StoreProvider>");
   return store;
-}
-
-/** Detects the likely target OS. A suggestion only — the user always decides. */
-export function guessOs(): TargetOs {
-  if (typeof navigator === "undefined") return "macos";
-  return /win/i.test(navigator.platform || navigator.userAgent) ? "windows" : "macos";
 }

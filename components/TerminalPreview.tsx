@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { parseHex } from "@/lib/color";
 import type { AppearanceConfig } from "@/lib/config";
 import { DEFAULT_CONFIG } from "@/lib/config";
-import type { TargetOs, Theme } from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
 
 export type Scenario = "shell" | "split" | "agent";
 
@@ -214,17 +214,15 @@ export function TerminalPreview({
   theme,
   config = DEFAULT_CONFIG,
   scenario = "shell",
-  os = "macos",
   width,
 }: {
   theme: Theme;
   config?: AppearanceConfig;
   scenario?: Scenario;
-  os?: TargetOs;
   width?: number;
 }) {
   const Session = SESSIONS[scenario];
-  const app = os === "macos" ? "cmux" : "wmux";
+  const app = "cmux";
 
   return (
     <div className="terminal" style={{ ...previewVars(theme, config), width }}>

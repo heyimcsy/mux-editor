@@ -87,7 +87,7 @@ export const FONT_WEIGHT_LABELS: Record<number, string> = {
 };
 
 /**
- * Asked for in the spec, but no such key exists in cmux, wmux or Ghostty.
+ * Asked for in the spec, but no such key exists in cmux or Ghostty.
  * Shown in the editor so nobody goes looking for a control that cannot work.
  */
 export const UNSUPPORTED: { label: string; reason: string }[] = [

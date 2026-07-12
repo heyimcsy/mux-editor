@@ -1,5 +1,3 @@
-export type TargetOs = "macos" | "windows";
-
 export type Theme = {
   name: string;
   background: string;
@@ -12,7 +10,7 @@ export type Theme = {
   palette: string[];
 };
 
-/** Keys the editor exposes, mirroring what cmux/wmux actually read. */
+/** Keys the editor exposes, mirroring what cmux actually reads. */
 export const BASE_COLOR_KEYS = [
   "background",
   "foreground",

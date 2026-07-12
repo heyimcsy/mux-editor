@@ -4,15 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Brand } from "@/components/TopBar";
 import { TerminalPreview } from "@/components/TerminalPreview";
-import { guessOs, useStore } from "@/lib/store";
-import { PRESETS, type TargetOs } from "@/lib/theme";
+import { PRESETS } from "@/lib/theme";
 
 const CYCLE_MS = 3200;
-
-const OS_CARDS: { id: TargetOs; os: string; app: string }[] = [
-  { id: "macos", os: "macOS", app: "cmux" },
-  { id: "windows", os: "Windows", app: "wmux" },
-];
 
 const FEATURES = [
   {
@@ -31,11 +25,7 @@ const FEATURES = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { setOs } = useStore();
   const [presetIndex, setPresetIndex] = useState(0);
-  const [suggested, setSuggested] = useState<TargetOs | null>(null);
-
-  useEffect(() => setSuggested(guessOs()), []);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -48,11 +38,6 @@ export default function LandingPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  function choose(os: TargetOs) {
-    setOs(os);
-    router.push("/editor");
-  }
-
   return (
     <main className="landing">
       <div className="landing__inner">
@@ -60,7 +45,7 @@ export default function LandingPage() {
 
         <h1 className="landing__title">터미널 테마를, 보면서 만드세요.</h1>
         <p className="landing__lede">
-          cmux와 wmux의 색을 눈으로 확인하며 고르고, 그대로 붙여넣을 수 있는 설정
+          cmux(macOS)의 색을 눈으로 확인하며 고르고, 그대로 붙여넣을 수 있는 설정
           파일과 명령어를 받아가세요. 설정 파일 문법은 몰라도 됩니다.
         </p>
 
@@ -68,22 +53,14 @@ export default function LandingPage() {
           <TerminalPreview theme={PRESETS[presetIndex]} scenario="shell" />
         </div>
 
-        <h2 className="landing__question">어떤 터미널을 쓰시나요?</h2>
         <div className="os-choices">
-          {OS_CARDS.map((card) => (
-            <button
-              key={card.id}
-              type="button"
-              className="os-card"
-              onClick={() => choose(card.id)}
-            >
-              <span className="os-card__os">{card.os}</span>
-              <span className="os-card__app">{card.app}</span>
-              {suggested === card.id && (
-                <span className="os-card__suggested">지금 쓰는 것 같아요</span>
-              )}
-            </button>
-          ))}
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => router.push("/editor")}
+          >
+            테마 만들러 가기
+          </button>
         </div>
 
         <div className="feature-list">

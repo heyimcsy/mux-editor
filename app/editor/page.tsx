@@ -9,7 +9,7 @@ import {
 } from "@/components/TerminalPreview";
 import { ThemePanel } from "@/components/ThemePanel";
 import { FloatingBar } from "@/components/TopBar";
-import { guessOs, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
@@ -40,7 +40,7 @@ function ownsScroll(target: EventTarget | null) {
 }
 
 export default function EditorPage() {
-  const { os, setOs, hydrated, theme, config, patchTheme, setPaletteColor } = useStore();
+  const { theme, config, patchTheme, setPaletteColor } = useStore();
   const [scenario, setScenario] = useState<Scenario>("shell");
   const [extractOpen, setExtractOpen] = useState(false);
   const [transform, setTransform] = useState<Transform>(INITIAL);
@@ -52,11 +52,6 @@ export default function EditorPage() {
   useEffect(() => {
     transformRef.current = transform;
   }, [transform]);
-
-  // Landing normally sets this; a direct visit to /editor falls back to a guess.
-  useEffect(() => {
-    if (hydrated && !os) setOs(guessOs());
-  }, [hydrated, os, setOs]);
 
   // Wheel must be a non-passive listener to cancel the page's own scroll.
   useEffect(() => {
@@ -149,7 +144,6 @@ export default function EditorPage() {
           theme={theme}
           config={config}
           scenario={scenario}
-          os={os ?? "macos"}
           width={PREVIEW_WIDTH}
         />
 
