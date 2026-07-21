@@ -7,9 +7,18 @@ export type ExportStep = {
   id: string;
   title: string;
   description: string;
-  code: string;
+  /**
+   * A shell command that carries out the whole step. Preferred over `code`,
+   * because saving a file by hand is where this goes wrong most often — macOS
+   * text editors silently append `.txt`, and Ghostty then never finds the file.
+   */
+  command?: string;
+  /** The file body, for anyone who would rather write the file themselves. */
+  code?: string;
   /** Shown above the code block when the snippet belongs in a file. */
   path?: string;
+  /** The trap this step has, spelled out where the user will hit it. */
+  warning?: string;
 };
 
 export type ExportPlan = {
@@ -100,6 +109,14 @@ export function toGhosttyConfig(
   return lines.join("\n") + "\n";
 }
 
+/**
+ * Wraps a file body in a heredoc. The delimiter is quoted so the shell expands
+ * nothing inside — a color like `#fff` or a `$` in a font name stays literal.
+ */
+function writeFileCommand(path: string, body: string): string {
+  return `cat > ${path} << 'MUX_EOF'\n${body.trimEnd()}\nMUX_EOF\n`;
+}
+
 export function buildExportPlan(
   theme: Theme,
   config: AppearanceConfig
@@ -107,6 +124,8 @@ export function buildExportPlan(
   const slug = themeSlug(theme.name);
   const themeBody = toGhosttyTheme(theme);
   const configBody = toGhosttyConfig(config, { themeName: theme.name });
+
+  const themePath = `~/.config/ghostty/themes/${slug}`;
 
   return {
     themeFileName: slug,
@@ -116,23 +135,41 @@ export function buildExportPlan(
       {
         id: "write-theme",
         title: "1단계 — 테마 파일 만들기",
-        description: "색상만 담긴 파일입니다. 이 경로에 저장하세요. 확장자는 없습니다.",
-        path: `~/.config/ghostty/themes/${slug}`,
+        description: "색상만 담긴 파일입니다.",
+        path: themePath,
+        command:
+          `mkdir -p ~/.config/ghostty/themes\n` +
+          writeFileCommand(themePath, themeBody),
         code: themeBody,
+        warning:
+          `파일 이름은 확장자 없이 정확히 ${slug} 여야 합니다. ` +
+          "텍스트 편집기로 저장하면 .txt 가 자동으로 붙는데, 그러면 Ghostty가 " +
+          "테마를 찾지 못하고 아무 일도 일어나지 않습니다. Finder는 확장자를 " +
+          "숨기기 때문에 눈으로는 알아채기 어렵습니다. 위 명령을 쓰면 이 문제가 " +
+          "생기지 않습니다.",
       },
       {
         id: "write-config",
         title: "2단계 — 설정 파일 쓰기",
-        description:
-          "폰트·창·분할 설정과 테마 지정입니다. 기존 파일이 있다면 같은 키만 바꿔 넣으세요.",
+        description: "폰트·창·분할 설정과 테마 지정입니다.",
         path: "~/.config/ghostty/config",
+        // Backs the old config up first: this file is one people hand-edit over
+        // time, and overwriting it silently would cost them that work.
+        command:
+          `mkdir -p ~/.config/ghostty\n` +
+          `[ -f ~/.config/ghostty/config ] && cp ~/.config/ghostty/config ~/.config/ghostty/config.bak.$(date +%Y%m%d-%H%M%S)\n` +
+          writeFileCommand("~/.config/ghostty/config", configBody),
         code: configBody,
+        warning:
+          "이미 쓰던 설정 파일이 있다면 이 내용이 통째로 덮어씁니다. 위 명령은 " +
+          "덮어쓰기 전에 config.bak.날짜 로 백업을 남기고, 직접 저장하실 " +
+          "때는 기존 파일에서 같은 키만 바꿔 넣으세요.",
       },
       {
         id: "reload",
         title: "3단계 — 적용하기",
         description: "터미널에서 실행하거나, cmux 안에서 ⌘⇧, 를 누르세요.",
-        code: "cmux reload-config\n",
+        command: "cmux reload-config\n",
       },
     ],
   };

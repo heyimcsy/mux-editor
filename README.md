@@ -36,35 +36,38 @@ Mux Editor closes that loop. Every color you touch repaints a simulated terminal
 | **Contrast warnings** | WCAG 2.1 ratios computed live — 4.5:1 for body text, 3:1 for colored output. You find out that your green is unreadable *before* you commit to it. |
 | **Font, window & split settings** | Font family, size, weight, synthetic styles, thickening, alpha blending, background opacity & blur, window padding, split divider color, unfocused split opacity & fill. |
 | **Local font detection** | Where the browser allows it (`queryLocalFonts`), your installed monospace fonts are detected by measuring glyph advance widths — no hardcoded list required. |
-| **Copy-paste export** | Two files and one command, each with its exact destination path. Download them or copy them inline. |
+| **Export that can't go wrong** | Each step is a single command you paste into a terminal. Writing the files by hand is still offered — but that path is where macOS silently appends `.txt` and Ghostty then never finds your theme, so the editor says so in place. Existing configs are backed up before they're overwritten. |
 
 Five presets ship out of the box: **Ocean Night** (default), Dracula, Catppuccin Mocha, Catppuccin Latte, and Solarized Dark.
 
 ## Using it
 
 1. **Design** — open [the editor](https://heyimcsy.github.io/mux-editor/) and pick your colors.
-2. **Export** — hit export and you get three steps:
+2. **Export** — you get three steps, each a command to paste:
 
-   ```ini
-   # ~/.config/ghostty/themes/ocean-night   (no file extension)
+   ```bash
+   mkdir -p ~/.config/ghostty/themes
+   cat > ~/.config/ghostty/themes/ocean-night << 'MUX_EOF'
    background = #1d262a
    foreground = #e7ebed
-   cursor-color = #eaeaea
-   ...
    palette = 0=#435b67
-   palette = 1=#fc3841
+   ...
+   MUX_EOF
    ```
 
-   ```ini
-   # ~/.config/ghostty/config
+   ```bash
+   mkdir -p ~/.config/ghostty
+   [ -f ~/.config/ghostty/config ] && cp ~/.config/ghostty/config ~/.config/ghostty/config.bak.$(date +%Y%m%d-%H%M%S)
+   cat > ~/.config/ghostty/config << 'MUX_EOF'
    font-family = JetBrains Mono
-   font-size = 14
    theme = ocean-night
-   background-opacity = 1.00
    ...
+   MUX_EOF
    ```
 
 3. **Apply** — run `cmux reload-config`, or press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>,</kbd> inside cmux.
+
+Prefer to write the files yourself? Switch any step to **직접 저장** and you get the raw file body and its destination path instead. Just note that the theme filename must have **no extension** — if your editor saves `ocean-night.txt`, Ghostty ignores it and nothing happens.
 
 Your work persists in `localStorage`, so closing the tab does not lose the theme.
 

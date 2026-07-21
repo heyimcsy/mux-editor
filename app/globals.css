@@ -1007,6 +1007,16 @@ button {
   margin-bottom: var(--space-3);
 }
 
+/* The method toggle sits opposite the step title. */
+.export-step__head .segmented {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.export-step__warning {
+  margin-top: var(--space-5);
+}
+
 .export-step__title {
   margin: 0;
   font-size: var(--text-h3);
