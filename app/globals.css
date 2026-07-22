@@ -697,6 +697,11 @@ button {
    Modal — image color extraction
    ============================================================ */
 
+/* Beats the `hidden` attribute, which the UA only applies as `display: none`. */
+.overlay[hidden] {
+  display: none;
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -768,6 +773,52 @@ button {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-default);
   cursor: crosshair;
+}
+
+.panel__subheading {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.target-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-base);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.target-chip:hover {
+  border-color: var(--border-strong, var(--border-default));
+}
+
+.target-chip--active {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.target-chip__dot {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs, 3px);
 }
 
 .picker-toolbar {
