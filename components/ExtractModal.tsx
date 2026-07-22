@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildThemeFromSwatches,
   extractSwatches,
@@ -8,6 +8,7 @@ import {
   type ExtractedTheme,
   type Swatch as SwatchColor,
 } from "@/lib/extract";
+import { useStore } from "@/lib/store";
 import type { Theme } from "@/lib/theme";
 import { ANSI_NAMES } from "@/lib/theme";
 
@@ -41,15 +42,23 @@ const TARGETS: { id: Target; label: string; hint: string }[] = [
   { id: "palette", label: "팔레트 슬롯에", hint: "고른 색을 ANSI 번호 하나에 넣습니다" },
 ];
 
+/**
+ * Stays mounted while the editor is open and hides itself when closed, so the
+ * decoded image, its swatches and the chosen slot survive. Unmounting meant
+ * re-dropping the same file for every single color you wanted to take from it.
+ */
 export function ExtractModal({
+  open,
   onClose,
   onApplyTheme,
   onApplyPaletteColor,
 }: {
+  open: boolean;
   onClose: () => void;
   onApplyTheme: (patch: Partial<Theme>) => void;
   onApplyPaletteColor: (index: number, hex: string) => void;
 }) {
+  const { theme } = useStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasImage, setHasImage] = useState(false);
   const [swatches, setSwatches] = useState<SwatchColor[]>([]);
@@ -58,6 +67,13 @@ export function ExtractModal({
   const [target, setTarget] = useState<Target>("auto");
   const [slot, setSlot] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!applied) return;
+    const timer = window.setTimeout(() => setApplied(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [applied]);
 
   const loadFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -126,14 +142,29 @@ export function ExtractModal({
   const canApply =
     target === "auto" ? extracted !== null : picked !== null && hasImage;
 
+  /**
+   * Applies without closing. Taking several colors out of one image is the
+   * normal case, and the palette row below reflects each change immediately, so
+   * there is nothing to close the dialog for.
+   */
   function apply() {
     if (target === "auto") {
-      if (extracted) onApplyTheme(extracted);
-    } else if (picked) {
-      if (target === "palette") onApplyPaletteColor(slot, picked);
-      else onApplyTheme({ [target]: picked } as Partial<Theme>);
+      if (!extracted) return;
+      onApplyTheme(extracted);
+      setApplied("팔레트 전체를 적용했습니다");
+      return;
     }
-    onClose();
+
+    if (!picked) return;
+
+    if (target === "palette") {
+      onApplyPaletteColor(slot, picked);
+      setApplied(`${slot}번(${ANSI_NAMES[slot]})에 ${picked} 적용`);
+    } else {
+      onApplyTheme({ [target]: picked } as Partial<Theme>);
+      const label = TARGETS.find((option) => option.id === target)?.label ?? "";
+      setApplied(`${label.replace(/으?로$/, "")}에 ${picked} 적용`);
+    }
   }
 
   return (
@@ -142,6 +173,7 @@ export function ExtractModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="extract-title"
+      hidden={!open}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -196,9 +228,22 @@ export function ExtractModal({
 
             {hasImage && (
               <>
-                <p className="hint" style={{ marginTop: "var(--space-5)" }}>
-                  이미지를 클릭하면 그 지점의 색을 뽑습니다.
-                </p>
+                <div className="picker-toolbar">
+                  <p className="hint">이미지를 클릭하면 그 지점의 색을 뽑습니다.</p>
+                  <label className="btn btn--ghost btn--sm">
+                    다른 이미지
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) loadFile(file);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
                 <div className="swatch-row">
                   {swatches.slice(0, 16).map((swatch) => (
                     <button
@@ -247,18 +292,35 @@ export function ExtractModal({
             </div>
 
             {target === "palette" && (
-              <select
-                className="select"
-                value={slot}
-                aria-label="ANSI 팔레트 번호"
-                onChange={(event) => setSlot(Number(event.target.value))}
-              >
-                {ANSI_NAMES.map((name, index) => (
-                  <option key={index} value={index}>
-                    {index} — {name}
-                  </option>
-                ))}
-              </select>
+              <>
+                <p className="hint" style={{ margin: "var(--space-6) 0 var(--space-3)" }}>
+                  넣을 자리를 고르세요. 지금 팔레트 색이 그대로 보입니다.
+                </p>
+                <div className="swatch-row" role="radiogroup" aria-label="ANSI 팔레트 번호">
+                  {theme.palette.map((color, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      role="radio"
+                      aria-checked={slot === index}
+                      className="swatch-row__chip"
+                      style={{
+                        background: color,
+                        boxShadow:
+                          slot === index
+                            ? "0 0 0 2px var(--focus-ring)"
+                            : undefined,
+                      }}
+                      aria-label={`${index}번 ${ANSI_NAMES[index]}`}
+                      title={`${index} — ${ANSI_NAMES[index]}`}
+                      onClick={() => setSlot(index)}
+                    />
+                  ))}
+                </div>
+                <p className="hint" style={{ marginTop: "var(--space-3)" }}>
+                  {slot}번 — {ANSI_NAMES[slot]}
+                </p>
+              </>
             )}
 
             {target !== "auto" && (
@@ -288,6 +350,14 @@ export function ExtractModal({
             >
               미리보기에 적용
             </button>
+
+            <p
+              className="hint"
+              role="status"
+              style={{ marginTop: "var(--space-4)", minHeight: "1.2em" }}
+            >
+              {applied ?? "적용해도 창은 닫히지 않습니다. 계속 골라 넣으세요."}
+            </p>
 
             {target === "auto" && hasImage && !extracted && (
               <p className="hint" style={{ marginTop: "var(--space-6)" }}>

@@ -7,6 +7,7 @@ import {
   toHex,
   type Rgb,
 } from "./color";
+import { contrastRatio } from "./contrast";
 import type { Theme } from "./theme";
 
 export type Swatch = { hex: string; count: number };
@@ -20,7 +21,13 @@ const BUCKET_SHIFT = 8 - BUCKET_BITS;
  * Buckets pixels by quantized RGB, then returns the most common buckets as
  * their true averaged color. Fully transparent pixels are skipped.
  */
-export function extractSwatches(data: ImageData, max = 24): Swatch[] {
+/**
+ * Deliberately generous. The dominant buckets of a painting are its muted
+ * mid-tones; the vivid accents that make a palette worth having are a small
+ * fraction of the pixels, and a tight cap throws them away before the ANSI
+ * slots ever get to compete for them.
+ */
+export function extractSwatches(data: ImageData, max = 48): Swatch[] {
   const buckets = new Map<number, { r: number; g: number; b: number; count: number }>();
   const pixels = data.data;
 
@@ -59,14 +66,14 @@ export function extractSwatches(data: ImageData, max = 24): Swatch[] {
 /** Hue anchors for ANSI slots 1–6: red, green, yellow, blue, magenta, cyan. */
 const ANSI_HUES = [0, 120, 55, 215, 300, 185];
 
-type Candidate = { hex: string; h: number; s: number; l: number };
+type Candidate = { hex: string; count: number; h: number; s: number; l: number };
 
 function toCandidates(swatches: Swatch[]): Candidate[] {
   return swatches.flatMap((swatch) => {
     const rgb = parseHex(swatch.hex);
     if (!rgb) return [];
     const hsl = rgbToHsl(rgb);
-    return [{ hex: swatch.hex, ...hsl }];
+    return [{ hex: swatch.hex, count: swatch.count, ...hsl }];
   });
 }
 
@@ -112,17 +119,47 @@ function synthesize(hue: number, saturation: number, lightness: number): string 
   return toHex(hslToRgb({ h: hue, s: saturation, l: lightness }));
 }
 
-/** Pulls a color to a legible lightness for the given background. */
-function fitToBackground(hex: string, isDarkBackground: boolean): string {
+/** What a colored glyph needs against the background to stay readable. */
+const ACCENT_CONTRAST = 3;
+
+/** Below this a hue stops reading as a color at all and turns into grey. */
+const MIN_USABLE_SATURATION = 0.2;
+
+/**
+ * Moves a color toward legibility and stops the moment it gets there.
+ *
+ * The obvious implementation — clamp every color to a fixed lightness — is what
+ * turned vivid source images into washed-out themes: it rewrote colors that
+ * were already perfectly readable. This walks lightness in small steps and
+ * halts as soon as the color clears the contrast threshold, so a color the
+ * image already supports comes through with its own tone intact.
+ */
+function fitToBackground(
+  hex: string,
+  background: string,
+  isDarkBackground: boolean
+): string {
   const rgb = parseHex(hex);
   if (!rgb) return hex;
-  const { h, s, l } = rgbToHsl(rgb);
 
-  const clamped = isDarkBackground
-    ? Math.max(l, 0.5)
-    : Math.min(l, 0.48);
+  const { h, l } = rgbToHsl(rgb);
+  const s = Math.max(rgbToHsl(rgb).s, MIN_USABLE_SATURATION);
 
-  return toHex(hslToRgb({ h, s: Math.max(s, 0.35), l: clamped }));
+  let lightness = l;
+  let candidate = toHex(hslToRgb({ h, s, l: lightness }));
+
+  const step = isDarkBackground ? 0.03 : -0.03;
+  for (let i = 0; i < 24; i++) {
+    if (contrastRatio(candidate, background) >= ACCENT_CONTRAST) break;
+
+    const next = Math.min(1, Math.max(0, lightness + step));
+    if (next === lightness) break;
+
+    lightness = next;
+    candidate = toHex(hslToRgb({ h, s, l: lightness }));
+  }
+
+  return candidate;
 }
 
 export type ExtractedTheme = Pick<
@@ -149,19 +186,22 @@ export function buildThemeFromSwatches(swatches: Swatch[]): ExtractedTheme | nul
   const darkest = byLightness[0];
   const lightest = byLightness[byLightness.length - 1];
 
-  // The more common of the two extremes becomes the background — a photo of a
-  // bright sky should yield a light theme, not a dark one with a bright bg.
-  const darkCount = swatches.find((s) => s.hex === darkest.hex)?.count ?? 0;
-  const lightCount = swatches.find((s) => s.hex === lightest.hex)?.count ?? 0;
-  const backgroundIsDark = darkCount >= lightCount ? true : lightest.l < 0.5;
+  // Decided by how bright the image is overall, weighted by area. Comparing
+  // just the two extreme swatches made this flip on a single bright speck.
+  const totalCount = candidates.reduce((sum, c) => sum + c.count, 0) || 1;
+  const meanLightness =
+    candidates.reduce((sum, c) => sum + c.l * c.count, 0) / totalCount;
+  const backgroundIsDark = meanLightness < 0.5;
 
+  // The background carries some of the image's hue — a fully neutral one throws
+  // away the very thing that made the user pick this image.
   const background = backgroundIsDark
-    ? synthesize(darkest.h, Math.min(darkest.s, 0.35), Math.min(darkest.l, 0.16))
-    : synthesize(lightest.h, Math.min(lightest.s, 0.12), Math.max(lightest.l, 0.92));
+    ? synthesize(darkest.h, Math.min(darkest.s, 0.45), Math.min(darkest.l, 0.17))
+    : synthesize(lightest.h, Math.min(lightest.s, 0.18), Math.max(lightest.l, 0.93));
 
   const foreground = backgroundIsDark
-    ? synthesize(lightest.h, Math.min(lightest.s, 0.12), Math.max(lightest.l, 0.9))
-    : synthesize(darkest.h, Math.min(darkest.s, 0.3), Math.min(darkest.l, 0.24));
+    ? synthesize(lightest.h, Math.min(lightest.s, 0.14), Math.max(lightest.l, 0.9))
+    : synthesize(darkest.h, Math.min(darkest.s, 0.32), Math.min(darkest.l, 0.22));
 
   const averageSaturation =
     candidates.reduce((sum, c) => sum + c.s, 0) / candidates.length;
@@ -170,7 +210,7 @@ export function buildThemeFromSwatches(swatches: Swatch[]): ExtractedTheme | nul
   const normal = ANSI_HUES.map((hue, slot) => {
     const match = matches[slot];
     return match
-      ? fitToBackground(match.hex, backgroundIsDark)
+      ? fitToBackground(match.hex, background, backgroundIsDark)
       : synthesize(hue, Math.max(averageSaturation, 0.45), backgroundIsDark ? 0.6 : 0.42);
   });
 

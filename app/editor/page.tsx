@@ -162,13 +162,13 @@ export default function EditorPage() {
 
       <ThemePanel onOpenExtract={() => setExtractOpen(true)} />
 
-      {extractOpen && (
-        <ExtractModal
-          onClose={() => setExtractOpen(false)}
-          onApplyTheme={patchTheme}
-          onApplyPaletteColor={setPaletteColor}
-        />
-      )}
+      {/* Always mounted: unmounting would drop the loaded image and its swatches. */}
+      <ExtractModal
+        open={extractOpen}
+        onClose={() => setExtractOpen(false)}
+        onApplyTheme={patchTheme}
+        onApplyPaletteColor={setPaletteColor}
+      />
     </main>
   );
 }

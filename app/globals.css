@@ -770,6 +770,18 @@ button {
   cursor: crosshair;
 }
 
+.picker-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.picker-toolbar .hint {
+  margin: 0;
+}
+
 .swatch-row {
   display: flex;
   flex-wrap: wrap;
